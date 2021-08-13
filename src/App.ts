@@ -37,7 +37,13 @@ class App {
         this.lastT = 0;
         this.balls = [
             {
-                x: 0,
+                x: 0.5,
+                y: 0,
+                dx: 0,
+                dy: 0
+            },
+            {
+                x: -0.5,
                 y: 0,
                 dx: 0,
                 dy: 0
@@ -62,9 +68,9 @@ class App {
     }
 
     private draw(t: number) {
-        if (t - this.lastT > 300) {
+        if (t - this.lastT > 50) {
             // if browser inactive, or heavily slowed, slow animation
-            this.lastT = t;
+            this.lastT = t - 50;
         }
         const dt = (t - this.lastT) / 1000;
         this.lastT = t;
@@ -88,7 +94,11 @@ class App {
                 const reflectAcross = Math.atan2(ball.y, ball.x);
                 const ballAngle = Math.atan2(ball.dy, ball.dx);
                 const newAngle = reflectAcross + (reflectAcross - ballAngle);
-                const oldMagnitude = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                // it seems there's more tendency to gain velocity
+                // from floating point arithmetic errors
+                // rather than lose velocity
+                // so this 0.999... is to compensate for that
+                const oldMagnitude = 0.9999999999999 * Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
                 ball.dx = -Math.cos(newAngle) * oldMagnitude;
                 ball.dy = -Math.sin(newAngle) * oldMagnitude;
 
@@ -105,14 +115,18 @@ class App {
 
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const g = Math.abs(Math.floor(t / 10) % 510 - 255);
-        this.context.fillStyle = `rgb(128, ${g}, 192)`;
-
+        const green = Math.abs(Math.floor(t / 10) % 128 - 64);
         const radius = Math.min(this.canvas.width, this.canvas.height) * 0.4375;
 
+        let colorMod = 0;
+        const colorModStep = 64 / (this.balls.length - 1 + 1e-40);
         for (let ball of this.balls) {
+            this.context.fillStyle = `rgb(${128 + colorMod}, ${green}, ${192 - colorMod})`;
+            colorMod = Math.floor(colorMod + colorModStep);
+
             const x = radius * ball.x + this.canvas.width / 2;
             const y = radius * ball.y + this.canvas.height / 2;
+
             this.context.beginPath();
             this.context.ellipse(x, y, 10, 10, 0, 0, 6.2832);
             this.context.fill();
