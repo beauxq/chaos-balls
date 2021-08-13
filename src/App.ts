@@ -21,12 +21,14 @@ class App {
 
         this.canvas.addEventListener('click', (e) => {
             console.log(`click: ${e.x} ${e.y}`);
+            console.log(this.balls);
         });
         this.canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             console.log(`right click: ${e.x} ${e.y}`);
         });
         this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
             const down = e.deltaY > 0;
             const x = e.offsetX;
             const y = e.offsetY;
@@ -94,13 +96,16 @@ class App {
                 const reflectAcross = Math.atan2(ball.y, ball.x);
                 const ballAngle = Math.atan2(ball.dy, ball.dx);
                 const newAngle = reflectAcross + (reflectAcross - ballAngle);
+                const oldMagnitude = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+
                 // it seems there's more tendency to gain velocity
                 // from floating point arithmetic errors
                 // rather than lose velocity
                 // so this 0.999... is to compensate for that
-                const oldMagnitude = 0.9999999999999 * Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
-                ball.dx = -Math.cos(newAngle) * oldMagnitude;
-                ball.dy = -Math.sin(newAngle) * oldMagnitude;
+                const newMagnitude = Math.min(0.9999999999999, (7 / oldMagnitude + 1) / 2) * oldMagnitude;
+
+                ball.dx = -Math.cos(newAngle) * newMagnitude;
+                ball.dy = -Math.sin(newAngle) * newMagnitude;
 
                 // finish dt
                 const dtAfter = dt - dtBefore;
