@@ -54,7 +54,7 @@ class App {
     }
 
     private draw(t: number) {
-        if (this.lastT === 0) {
+        if (t - this.lastT > 300) {
             this.lastT = t;
         }
         const dt = (t - this.lastT) / 1000;
