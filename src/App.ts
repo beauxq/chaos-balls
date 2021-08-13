@@ -10,7 +10,7 @@ class App {
     private context: CanvasRenderingContext2D;
 
     private lastT: number;
-    private ball: Ball;
+    private balls: Ball[];
     private readonly g: number = 9.8;
 
     constructor(width: number, height: number) {
@@ -35,12 +35,20 @@ class App {
         });
 
         this.lastT = 0;
-        this.ball = {
-            x: 0,
-            y: 0,
-            dx: 0,
-            dy: 0
-        }
+        this.balls = [
+            {
+                x: 0,
+                y: 0,
+                dx: 0,
+                dy: 0
+            },
+            {
+                x: 0,
+                y: 0,
+                dx: 0,
+                dy: 0
+            }
+        ]
 
         requestAnimationFrame((t) => {
             this.draw(t);
@@ -55,41 +63,44 @@ class App {
 
     private draw(t: number) {
         if (t - this.lastT > 300) {
+            // if browser inactive, or heavily slowed, slow animation
             this.lastT = t;
         }
         const dt = (t - this.lastT) / 1000;
         this.lastT = t;
 
-        this.ball.dy += dt * this.g;
-        const newX = this.ball.x + dt * this.ball.dx;
-        const newY = this.ball.y + dt * this.ball.dy;
-        const previousDistance = Math.sqrt(this.ball.x * this.ball.x + this.ball.y * this.ball.y);
-        const newDistance = Math.sqrt(newX * newX + newY * newY);
-        if (newDistance > 1) {
-            const beforeEdge = 1 - previousDistance;
-            const totalDistance = newDistance - previousDistance;
-            const fraction = beforeEdge / totalDistance;
-            const dtBefore = dt * fraction;
-            this.ball.x += dtBefore * this.ball.dx;
-            this.ball.y += dtBefore * this.ball.dy;
-            // at edge
+        for (let ball of this.balls) {
+            ball.dy += dt * this.g;
+            const newX = ball.x + dt * ball.dx;
+            const newY = ball.y + dt * ball.dy;
+            const previousDistance = Math.sqrt(ball.x * ball.x + ball.y * ball.y);
+            const newDistance = Math.sqrt(newX * newX + newY * newY);
+            if (newDistance > 1) {
+                const beforeEdge = 1 - previousDistance;
+                const totalDistance = newDistance - previousDistance;
+                const fraction = beforeEdge / totalDistance;
+                const dtBefore = dt * fraction;
+                ball.x += dtBefore * ball.dx;
+                ball.y += dtBefore * ball.dy;
+                // at edge
 
-            // bounce
-            const reflectAcross = Math.atan2(this.ball.y, this.ball.x);
-            const ballAngle = Math.atan2(this.ball.dy, this.ball.dx);
-            const newAngle = reflectAcross + (reflectAcross - ballAngle);
-            const oldMagnitude = Math.sqrt(this.ball.dx * this.ball.dx + this.ball.dy * this.ball.dy);
-            this.ball.dx = -Math.cos(newAngle) * oldMagnitude;
-            this.ball.dy = -Math.sin(newAngle) * oldMagnitude;
+                // bounce
+                const reflectAcross = Math.atan2(ball.y, ball.x);
+                const ballAngle = Math.atan2(ball.dy, ball.dx);
+                const newAngle = reflectAcross + (reflectAcross - ballAngle);
+                const oldMagnitude = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                ball.dx = -Math.cos(newAngle) * oldMagnitude;
+                ball.dy = -Math.sin(newAngle) * oldMagnitude;
 
-            // finish dt
-            const dtAfter = dt - dtBefore;
-            this.ball.x += dtAfter * this.ball.dx;
-            this.ball.y += dtAfter * this.ball.dy;
-        }
-        else {  // no bounce
-            this.ball.x = newX;
-            this.ball.y = newY;
+                // finish dt
+                const dtAfter = dt - dtBefore;
+                ball.x += dtAfter * ball.dx;
+                ball.y += dtAfter * ball.dy;
+            }
+            else {  // no bounce
+                ball.x = newX;
+                ball.y = newY;
+            }
         }
 
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -98,11 +109,14 @@ class App {
         this.context.fillStyle = `rgb(128, ${g}, 192)`;
 
         const radius = Math.min(this.canvas.width, this.canvas.height) * 0.4375;
-        const x = radius * this.ball.x + this.canvas.width / 2;
-        const y = radius * this.ball.y + this.canvas.height / 2;
-        this.context.beginPath();
-        this.context.ellipse(x, y, 10, 10, 0, 0, 6.2832);
-        this.context.fill();
+
+        for (let ball of this.balls) {
+            const x = radius * ball.x + this.canvas.width / 2;
+            const y = radius * ball.y + this.canvas.height / 2;
+            this.context.beginPath();
+            this.context.ellipse(x, y, 10, 10, 0, 0, 6.2832);
+            this.context.fill();
+        }
 
         // draw container circle
         this.context.fillStyle = "rgb(192, 128, 128)";
