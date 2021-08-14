@@ -97,12 +97,28 @@ class App {
                 const ballAngle = Math.atan2(ball.dy, ball.dx);
                 const newAngle = reflectAcross + (reflectAcross - ballAngle);
                 const oldMagnitude = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                if (oldMagnitude === 0) {
+                    console.warn("oldMag 0");
+                }
 
                 // it seems there's more tendency to gain velocity
                 // from floating point arithmetic errors
                 // rather than lose velocity
                 // so this 0.999... is to compensate for that
-                const newMagnitude = Math.min(0.9999999999999, (7 / oldMagnitude + 1) / 2) * oldMagnitude;
+                const vMultiplier = 0.9999999999999;
+
+                // then there's still an arbitrary chance that a ball will get going really fast
+                // so I want a speed limit
+                // the velocity required to go from bottom to top (against gravity `g`) is:
+                // `sqrt(g * 2 * diameter) == sqrt(9.8 * 2 * 2) == 6.2609903`
+                // I want it to be able to do at least that,
+                // so I set the speed limit a little above that
+                const softSpeedLimit = 6.5;
+
+                const newMagnitude = Math.min(
+                    vMultiplier,
+                    (softSpeedLimit / oldMagnitude + 1) / 2
+                ) * oldMagnitude;
 
                 ball.dx = -Math.cos(newAngle) * newMagnitude;
                 ball.dy = -Math.sin(newAngle) * newMagnitude;
