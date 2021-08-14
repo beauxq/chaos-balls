@@ -1,6 +1,8 @@
 # chaos balls
 -------------
 
+see this app at: https://beauxq.github.io/chaos-balls/
+
 I found this to be an interesting experiment relating chaos theory with floating point arithmetic (FPA) errors.
 
 ---
